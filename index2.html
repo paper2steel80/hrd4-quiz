@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>4th Week Quiz — Personal Training & Development</title>
+<style>
+  :root {
+    --blue: #4472A8;
+    --blue-light: #D6E8F7;
+    --blue-mid: #5B8AC5;
+    --green: #2E7D32;
+    --green-bg: #EAF4EA;
+    --red: #C62828;
+    --red-bg: #FFEBEE;
+    --gray: #F2F2F2;
+    --text: #1A1A1A;
+    --muted: #666;
+    --white: #fff;
+    --radius: 10px;
+    --shadow: 0 2px 10px rgba(0,0,0,0.08);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #EEF3FA; color: var(--text); min-height: 100vh; padding: 20px; }
+
+  header { background: var(--blue); color: white; border-radius: var(--radius); padding: 28px 32px 22px; margin-bottom: 22px; }
+  header .sub { font-size: 12px; opacity: .7; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
+  header h1 { font-size: 21px; font-weight: 600; margin-bottom: 6px; }
+  header p { font-size: 13px; opacity: .82; }
+
+  .info-bar { background: white; border-radius: var(--radius); padding: 14px 22px; margin-bottom: 18px; box-shadow: var(--shadow); display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+  .info-bar strong { color: var(--blue); }
+
+  /* Progress */
+  .prog-wrap { background: white; border-radius: var(--radius); padding: 14px 22px; margin-bottom: 22px; box-shadow: var(--shadow); }
+  .prog-top { display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); margin-bottom: 8px; }
+  .prog-bar { height: 8px; background: #ddd; border-radius: 4px; overflow: hidden; }
+  .prog-fill { height: 100%; background: var(--blue); border-radius: 4px; transition: width .35s; }
+
+  /* Question card */
+  .qcard {
+    background: white; border-radius: var(--radius);
+    padding: 22px 26px; margin-bottom: 16px;
+    box-shadow: var(--shadow); border-left: 4px solid var(--blue-mid);
+    transition: border-color .3s;
+  }
+  .qcard.answered   { border-left-color: #aaa; }
+  .qcard.show-correct  { border-left-color: var(--green); }
+  .qcard.show-wrong    { border-left-color: var(--red); }
+
+  .qmeta { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+  .qnum { background: var(--blue); color: white; border-radius: 50%; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; }
+  .qnum.answered { background: #aaa; }
+  .qnum.show-correct { background: var(--green); }
+  .qnum.show-wrong   { background: var(--red); }
+  .tag { font-size: 11px; padding: 2px 8px; border-radius: 20px; }
+  .tag-section { background: var(--gray); color: var(--muted); }
+  .tag-type { background: var(--blue-light); color: var(--blue); }
+
+  .qtext { font-size: 15px; font-weight: 600; line-height: 1.6; margin-bottom: 16px; }
+
+  /* MC options */
+  .options { display: flex; flex-direction: column; gap: 7px; }
+  .opt {
+    display: flex; align-items: flex-start; gap: 10px;
+    background: var(--gray); border: 2px solid transparent;
+    border-radius: 8px; padding: 10px 14px; cursor: pointer;
+    font-size: 14px; text-align: left; transition: all .18s; user-select: none;
+  }
+  .opt:hover { background: var(--blue-light); border-color: #b0c8e8; }
+  .opt.selected { background: var(--blue-light); border-color: var(--blue); }
+  .opt.result-correct { background: var(--green-bg); border-color: var(--green); color: var(--green); font-weight: 600; }
+  .opt.result-wrong   { background: var(--red-bg);   border-color: var(--red);   color: var(--red);   font-weight: 600; }
+  .opt.result-reveal  { background: var(--green-bg); border-color: var(--green); color: var(--green); }
+  .opt.locked { cursor: default; }
+  .letter {
+    width: 22px; height: 22px; border-radius: 50%; background: white;
+    border: 1.5px solid #bbb; display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700; flex-shrink: 0; margin-top: 1px;
+  }
+  .result-correct .letter { background: var(--green); color: white; border-color: var(--green); }
+  .result-wrong   .letter { background: var(--red);   color: white; border-color: var(--red); }
+  .result-reveal  .letter { background: var(--green); color: white; border-color: var(--green); }
+
+  /* T/F */
+  .tf-wrap { display: flex; gap: 10px; }
+  .tf-btn {
+    flex: 1; padding: 11px; border-radius: 8px; border: 2px solid transparent;
+    background: var(--gray); cursor: pointer; font-size: 14px; font-weight: 600;
+    text-align: center; transition: all .18s; user-select: none;
+  }
+  .tf-btn:hover { background: var(--blue-light); border-color: #b0c8e8; }
+  .tf-btn.selected { background: var(--blue-light); border-color: var(--blue); color: var(--blue); }
+  .tf-btn.result-correct { background: var(--green-bg); border-color: var(--green); color: var(--green); font-weight: 700; }
+  .tf-btn.result-wrong   { background: var(--red-bg);   border-color: var(--red);   color: var(--red);   font-weight: 700; }
+  .tf-btn.result-reveal  { background: var(--green-bg); border-color: var(--green); color: var(--green); }
+  .tf-btn.locked { cursor: default; }
+
+  /* Short answer */
+  .sa-wrap { display: flex; flex-direction: column; gap: 8px; }
+  .sa-input {
+    width: 100%; padding: 10px 14px; border: 2px solid #ddd; border-radius: 8px;
+    font-size: 14px; font-family: inherit; resize: vertical; min-height: 60px;
+    transition: border .2s;
+  }
+  .sa-input:focus { outline: none; border-color: var(--blue-mid); }
+  .sa-input.result-correct { border-color: var(--green); background: var(--green-bg); color: var(--green); }
+  .sa-input.result-wrong   { border-color: var(--red);   background: var(--red-bg);   }
+  .sa-input:disabled { cursor: default; }
+  .sa-note { font-size: 12px; color: var(--muted); font-style: italic; }
+
+  /* Unanswered warning */
+  .warn-ring { box-shadow: 0 0 0 3px #f5a623 !important; }
+
+  /* Feedback shown after submit */
+  .feedback {
+    margin-top: 14px; padding: 12px 16px; border-radius: 8px;
+    font-size: 13px; line-height: 1.7; display: none;
+  }
+  .feedback.show { display: block; }
+  .feedback.fb-ok  { background: var(--green-bg); border-left: 3px solid var(--green); }
+  .feedback.fb-err { background: var(--red-bg);   border-left: 3px solid var(--red); }
+  .fb-status { font-weight: 700; margin-bottom: 5px; }
+  .fb-status.ok  { color: var(--green); }
+  .fb-status.err { color: var(--red); }
+
+  /* Bottom bar */
+  .bottom-bar {
+    position: sticky; bottom: 0; background: white;
+    border-top: 1px solid #ddd; padding: 14px 22px;
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    box-shadow: 0 -4px 12px rgba(0,0,0,0.07); z-index: 100; flex-wrap: wrap;
+  }
+  .bottom-info { font-size: 13px; color: var(--muted); }
+  .bottom-info strong { color: var(--blue); font-size: 15px; }
+  .submit-btn {
+    padding: 12px 32px; background: var(--blue); color: white;
+    border: none; border-radius: 8px; cursor: pointer; font-size: 15px; font-weight: 700;
+    transition: background .2s; white-space: nowrap;
+  }
+  .submit-btn:hover { background: #3560a0; }
+  .submit-btn:disabled { background: #aaa; cursor: default; }
+
+  /* Result overlay */
+  #result-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,.5); z-index: 999;
+    align-items: center; justify-content: center; padding: 20px;
+  }
+  #result-overlay.show { display: flex; }
+  .result-box {
+    background: white; border-radius: 16px; padding: 40px 36px;
+    max-width: 460px; width: 100%; text-align: center; box-shadow: 0 8px 40px rgba(0,0,0,.2);
+    animation: popIn .3s ease;
+  }
+  @keyframes popIn { from { transform: scale(.85); opacity:0; } to { transform: scale(1); opacity:1; } }
+  .result-box h2 { font-size: 22px; color: var(--blue); margin-bottom: 8px; }
+  .big-pct { font-size: 64px; font-weight: 800; color: var(--blue); line-height: 1; }
+  .grade-msg { font-size: 15px; color: var(--muted); margin: 8px 0 24px; }
+  .stat-row { display: flex; justify-content: center; gap: 28px; margin-bottom: 28px; }
+  .stat { text-align: center; }
+  .stat .n { font-size: 30px; font-weight: 800; }
+  .stat .l { font-size: 12px; color: var(--muted); }
+  .stat.g .n { color: var(--green); }
+  .stat.r .n { color: var(--red); }
+  .result-btns { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+  .btn-retry { padding: 11px 28px; background: var(--blue); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 700; }
+  .btn-review { padding: 11px 28px; background: white; color: var(--blue); border: 2px solid var(--blue); border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 700; }
+
+  @media (max-width: 580px) {
+    .qcard { padding: 16px 14px; }
+    .tf-wrap { flex-direction: column; }
+    .bottom-bar { flex-direction: column; align-items: stretch; }
+    .submit-btn { text-align: center; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="sub">4th Week · 2026 · Mira Ko</div>
+  <h1>Personal Training &amp; Development — Quiz</h1>
+  <p>Answer all 19 questions, then press <strong>Submit &amp; Check</strong> to see your results and hints.</p>
+</header>
+
+<div class="info-bar">
+  📋 <strong>19 questions</strong> &nbsp;·&nbsp; Multiple Choice, True/False, and Short Answer &nbsp;·&nbsp; Complete all before checking
+</div>
+
+<div class="prog-wrap">
+  <div class="prog-top">
+    <span>Answered: <strong id="prog-done">0</strong> / 19</span>
+    <span id="prog-pct">0%</span>
+  </div>
+  <div class="prog-bar"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+</div>
+
+<div id="quiz-container"></div>
+
+<div class="bottom-bar">
+  <div class="bottom-info">Answered: <strong id="bar-done">0 / 19</strong></div>
+  <button class="submit-btn" id="submit-btn" onclick="submitQuiz()">Submit &amp; Check Answers</button>
+</div>
+
+<div id="result-overlay">
+  <div class="result-box">
+    <h2>Quiz Complete!</h2>
+    <div class="big-pct" id="res-pct">—</div>
+    <div class="grade-msg" id="res-grade"></div>
+    <div class="stat-row">
+      <div class="stat g"><div class="n" id="res-c">0</div><div class="l">Correct</div></div>
+      <div class="stat r"><div class="n" id="res-w">0</div><div class="l">Incorrect</div></div>
+      <div class="stat">  <div class="n">19</div><div class="l">Total</div></div>
+    </div>
+    <div class="result-btns">
+      <button class="btn-retry"  onclick="retryQuiz()">🔄 Try Again</button>
+      <button class="btn-review" onclick="closeOverlay()">📋 Review Answers</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const QUESTIONS = [
+  // ── 1. Views of T&D ──
+  { id:1, section:"1. Views of T&D", type:"mc",
+    q:"Training and development is best defined as:",
+    opts:["A process of randomly assigning tasks to employees","A process of systematically developing work-related knowledge and expertise for improving performance","The formal education system for obtaining academic degrees","A method of evaluating employee performance annually"],
+    correct:1,
+    hint:"The key words are 'systematically' and 'work-related knowledge and expertise.' T&D is distinct from formal academic education and its purpose is improving performance." },
+
+  { id:2, section:"1. Views of T&D", type:"tf",
+    q:"Training is focused on future job performance, while Education focuses on current job performance.",
+    correct:false,
+    hint:"It is the opposite. Training focuses on current job performance; Education targets future job performance or self-realization. Development promotes individual growth beyond the current job." },
+
+  { id:3, section:"1. Views of T&D", type:"mc",
+    q:"In Swanson's (1994) Taxonomy of Performance, which two levels belong to 'Changing the System'?",
+    opts:["Understand and Operate","Troubleshoot and Operate","Improve and Invent","Understand and Troubleshoot"],
+    correct:2,
+    hint:"The pyramid has three levels for Maintaining the System (Understand, Operate, Troubleshoot) and two for Changing the System — Improve and Invent." },
+
+  { id:4, section:"1. Views of T&D", type:"mc",
+    q:"According to Watkins & Marsick (1992), which type of workplace learning is 'unintentional and a byproduct of another activity'?",
+    opts:["Formal Learning","Informal Learning","Incidental Learning","Structured Learning"],
+    correct:2,
+    hint:"Incidental learning is unplanned — it happens as a side effect of doing something else, such as learning from a mistake or an unexpected situation at work." },
+
+  { id:5, section:"1. Views of T&D", type:"sa",
+    q:"Name the theorist whose 1951 work provided the core premise of Marsick and Watkins's Informal and Incidental Learning Model, and briefly state that premise.",
+    correctKW:["lewin","behavior","environment","interaction"],
+    correctAnswer:"Lewin (1951) — the behavior of individuals is a function of their interaction with their environment.",
+    hint:"The model draws on Lewin's field theory: B = f(P, E). Behavior (and learning) cannot be understood in isolation from the context or environment in which it occurs." },
+
+  // ── 2. Key T&D Terms ──
+  { id:6, section:"2. Key T&D Terms", type:"mc",
+    q:"Which term describes 'the human state, acquired through a combination of knowledge and experience, that enables individuals to consistently achieve performance outcomes that meet or exceed requirements'?",
+    opts:["Knowledge","Expertise","Learning","Training"],
+    correct:1,
+    hint:"Knowledge = mental components acquired through study. Learning = the process of acquiring knowledge. Expertise = the result — the state that consistently enables high performance." },
+
+  { id:7, section:"2. Key T&D Terms", type:"tf",
+    q:"Motivational T&D focuses on content related to technical systems and hardware procedures.",
+    correct:false,
+    hint:"Motivational T&D focuses on attitudinal content — values and beliefs. It aims to shift how employees think and feel. Technical skills T&D handles system- or tool-specific content." },
+
+  { id:8, section:"2. Key T&D Terms", type:"sa",
+    q:"Distinguish between 'customized T&D' and 'off-the-shelf T&D' in one or two sentences.",
+    correctKW:["organization","specific","generic","general"],
+    correctAnswer:"Customized T&D is structured training produced to address organization-specific training needs. Off-the-shelf T&D is structured training produced to address general or generic training needs.",
+    hint:"The key distinction is specificity. Customized = built for a particular organization's unique needs. Off-the-shelf = pre-made generic content that any organization can use." },
+
+  // ── 3. General T&D Process ──
+  { id:9, section:"3. General T&D Process", type:"mc",
+    q:"What is the correct order of the five phases in the general T&D process (ADDIE)?",
+    opts:["Design → Analyze → Develop → Implement → Evaluate","Analyze → Design → Develop → Implement → Evaluate","Analyze → Develop → Design → Implement → Evaluate","Implement → Analyze → Design → Develop → Evaluate"],
+    correct:1,
+    hint:"ADDIE: Analysis (identify problem) → Design (plan solution) → Development (build materials) → Implementation (deliver) → Evaluation (measure outcomes). Each phase informs the next." },
+
+  { id:10, section:"3. General T&D Process", type:"sa",
+    q:"In the Analysis phase of ADDIE, what is the key question a T&D practitioner must answer before moving forward?",
+    correctKW:["training","appropriate","solution","gap","performance","needed"],
+    correctAnswer:"Is T&D the appropriate solution for the identified performance gap?",
+    hint:"Not every performance problem requires training. The Analysis phase must determine whether the gap is due to a skill/knowledge deficit (addressable by T&D) or other factors such as motivation, unclear expectations, or lack of resources." },
+
+  // ── 4. ISD ──
+  { id:11, section:"4. Instructional Systems Development", type:"mc",
+    q:"Instructional Systems Development (ISD) was originally developed by:",
+    opts:["McKinsey & Company for business consulting","The U.S. military for systematic and effective military training","IDEO for design thinking processes","Harvard University for academic curriculum design"],
+    correct:1,
+    hint:"ISD was created by the U.S. military to handle the enormous scale and standardization requirements of military training — which also explains its incompatibility with typical business settings." },
+
+  { id:12, section:"4. Instructional Systems Development", type:"tf",
+    q:"A major limitation of ISD is that it assumes training is already determined to be the required solution at the analysis phase.",
+    correct:true,
+    hint:"ISD's analysis phase starts with job analysis — assuming training is needed. In business, a performance gap may be caused by motivation, unclear goals, or resource issues rather than skill deficits." },
+
+  { id:13, section:"4. Instructional Systems Development", type:"sa",
+    q:"What does TPS stand for, who created it, and what was the main reason it was developed?",
+    correctKW:["training","performance","system","swanson","business","isd"],
+    correctAnswer:"Training for Performance System, created by Swanson (1978), to address ISD's inadequate connection to core business performance requirements.",
+    hint:"TPS = Training for Performance System (Swanson, 1978). It was created because ISD lacked connection to business performance at both the analysis phase and the evaluation phase, and was poorly suited for management and knowledge work T&D." },
+
+  // ── 5. Recruitment & Development ──
+  { id:14, section:"5. Recruitment & Development of Talent", type:"mc",
+    q:"The 'BUY OR Make' perspective on talent strategy holds that:",
+    opts:["Recruitment and development can always be pursued simultaneously without trade-offs","Recruitment and development are alternative strategies competing within limited resources","Development is always preferred over recruitment","They have no strategic relationship"],
+    correct:1,
+    hint:"Knoke & Kalleberg (1994) see them as competing within limited budgets. The contrasting 'BUY AND Make' view, supported by Bills (1998), argues they can actually be complementary." },
+
+  { id:15, section:"5. Recruitment & Development of Talent", type:"tf",
+    q:"Development is especially important when organizational unity and shared values need to be transmitted, because these cannot simply be hired in from the external labor market.",
+    correct:true,
+    hint:"Development serves a socialization function — transmitting organizational values, norms, and tacit knowledge built over time. This is why development is preferred during organizational change or restructuring." },
+
+  // ── 6. Competency ──
+  { id:16, section:"6. Competency in Organization", type:"mc",
+    q:"McClelland (1973) challenged traditional views by arguing that job performance is better predicted by:",
+    opts:["IQ scores and academic credentials","Behavioral competencies rather than intelligence or academic credentials","Training volume alone","Formal qualifications and certifications"],
+    correct:1,
+    hint:"McClelland's 1973 paper showed IQ and grades predict academic success, not job success. What differentiates high performers are observable behavioral patterns — competencies." },
+
+  { id:17, section:"6. Competency in Organization", type:"mc",
+    q:"In Spencer & Spencer's (1993) Iceberg Model, which competencies are 'below the waterline' and harder to develop through training?",
+    opts:["Skills and knowledge","Job-specific technical abilities","Motives, self-concept, and values","Communication and presentation skills"],
+    correct:2,
+    hint:"Above the waterline: visible, observable skills and knowledge — easier to train. Below the waterline: motives, self-concept, and values — deeper hidden traits that are much harder to develop." },
+
+  { id:18, section:"6. Competency in Organization", type:"mc",
+    q:"According to McKinsey (2019), which digital capacity level involves 'development of IT products and services such as programming and app development'?",
+    opts:["Digital cognition","Digital utilization","Digitally proficient","Digital expert"],
+    correct:3,
+    hint:"Four levels low→high: Digital cognition → Digital utilization → Digitally proficient → Digital expert. Creating IT products (programming, app development) is the highest level." },
+
+  { id:19, section:"6. Competency in Organization", type:"sa",
+    q:"Define 'meta-competence' in your own words and explain why it is especially important in the context of the 4th Industrial Revolution.",
+    correctKW:["learn","develop","reflect","adapt","change","competenc","skill","ai","digital","future"],
+    correctAnswer:"Meta-competence is the capacity to develop, acquire, and reflect on competencies — learning-to-learn. In the 4th Industrial Revolution, technology changes rapidly, so the ability to continuously acquire new skills is more valuable than any fixed skill set.",
+    hint:"Meta-competence includes: capacity for developing competences, ability to acquire and reflect, learning-to-learn, and adaptability. In a world where AI and digital technologies shift job requirements constantly, knowing HOW to learn new skills is more durable than any specific skill." }
+];
+
+let selections = {};  // qid → selected index/value/text
+let submitted = false;
+
+// ── Build quiz ──
+function buildQuiz() {
+  const c = document.getElementById('quiz-container');
+  c.innerHTML = '';
+  selections = {};
+  submitted = false;
+  document.getElementById('submit-btn').disabled = false;
+  document.getElementById('prog-done').textContent = '0';
+  document.getElementById('prog-pct').textContent = '0%';
+  document.getElementById('prog-fill').style.width = '0%';
+  document.getElementById('bar-done').textContent = '0 / 19';
+
+  QUESTIONS.forEach((q, idx) => {
+    const card = document.createElement('div');
+    card.className = 'qcard';
+    card.id = 'card-' + q.id;
+
+    const typeLabel = { mc:'Multiple Choice', tf:'True / False', sa:'Short Answer' }[q.type];
+    let inputHtml = '';
+
+    if (q.type === 'mc') {
+      inputHtml = `<div class="options">` +
+        q.opts.map((opt, i) => `
+          <div class="opt" id="opt-${q.id}-${i}" onclick="pickMC(${q.id}, ${i})">
+            <span class="letter">${'ABCD'[i]}</span><span>${opt}</span>
+          </div>`).join('') + `</div>`;
+
+    } else if (q.type === 'tf') {
+      inputHtml = `<div class="tf-wrap">
+        <div class="tf-btn" id="tf-${q.id}-true"  onclick="pickTF(${q.id}, true)">✓ True</div>
+        <div class="tf-btn" id="tf-${q.id}-false" onclick="pickTF(${q.id}, false)">✗ False</div>
+      </div>`;
+
+    } else {
+      inputHtml = `<div class="sa-wrap">
+        <textarea class="sa-input" id="sa-${q.id}" placeholder="Write your answer here…"
+          oninput="markSA(${q.id})"></textarea>
+        <div class="sa-note">Short Answer — write in your own words. Keywords will be checked after submission.</div>
+      </div>`;
+    }
+
+    card.innerHTML = `
+      <div class="qmeta">
+        <div class="qnum" id="qnum-${q.id}">${idx + 1}</div>
+        <span class="tag tag-section">${q.section}</span>
+        <span class="tag tag-type">${typeLabel}</span>
+      </div>
+      <div class="qtext">${q.q}</div>
+      ${inputHtml}
+      <div class="feedback" id="fb-${q.id}">
+        <div class="fb-status" id="fbs-${q.id}"></div>
+        <div id="fbh-${q.id}"></div>
+      </div>`;
+
+    c.appendChild(card);
+  });
+}
+
+// ── Interaction handlers ──
+function pickMC(qid, idx) {
+  if (submitted) return;
+  selections[qid] = idx;
+  const q = QUESTIONS.find(x => x.id === qid);
+  q.opts.forEach((_, i) => {
+    const el = document.getElementById(`opt-${qid}-${i}`);
+    el.classList.toggle('selected', i === idx);
+  });
+  markCard(qid, 'answered');
+  updateProgress();
+}
+
+function pickTF(qid, val) {
+  if (submitted) return;
+  selections[qid] = val;
+  ['true','false'].forEach(v => {
+    const el = document.getElementById(`tf-${qid}-${v}`);
+    el.classList.toggle('selected', (v==='true') === val);
+  });
+  markCard(qid, 'answered');
+  updateProgress();
+}
+
+function markSA(qid) {
+  if (submitted) return;
+  const txt = document.getElementById(`sa-${qid}`).value.trim();
+  selections[qid] = txt || undefined;
+  markCard(qid, txt ? 'answered' : '');
+  updateProgress();
+}
+
+function markCard(qid, cls) {
+  const card = document.getElementById('card-' + qid);
+  const num  = document.getElementById('qnum-' + qid);
+  card.classList.remove('answered');
+  num.classList.remove('answered');
+  if (cls === 'answered') { card.classList.add('answered'); num.classList.add('answered'); }
+}
+
+function updateProgress() {
+  const done = Object.values(selections).filter(v => v !== undefined).length;
+  const total = QUESTIONS.length;
+  const pct = Math.round((done / total) * 100);
+  document.getElementById('prog-done').textContent = done;
+  document.getElementById('prog-pct').textContent = pct + '%';
+  document.getElementById('prog-fill').style.width = pct + '%';
+  document.getElementById('bar-done').textContent = done + ' / ' + total;
+}
+
+// ── Submit ──
+function submitQuiz() {
+  // Check unanswered
+  const unanswered = QUESTIONS.filter(q => selections[q.id] === undefined || selections[q.id] === '');
+  if (unanswered.length > 0) {
+    // Highlight first unanswered
+    const card = document.getElementById('card-' + unanswered[0].id);
+    card.classList.add('warn-ring');
+    card.scrollIntoView({ behavior:'smooth', block:'center' });
+    setTimeout(() => card.classList.remove('warn-ring'), 2000);
+    alert(`Please answer all questions before submitting.\n${unanswered.length} question(s) are still unanswered.`);
+    return;
+  }
+
+  submitted = true;
+  document.getElementById('submit-btn').disabled = true;
+
+  let correct = 0, wrong = 0;
+
+  QUESTIONS.forEach(q => {
+    const card = document.getElementById('card-' + q.id);
+    const num  = document.getElementById('qnum-' + q.id);
+    const fb   = document.getElementById('fb-' + q.id);
+    const fbs  = document.getElementById('fbs-' + q.id);
+    const fbh  = document.getElementById('fbh-' + q.id);
+    let isCorrect = false;
+
+    if (q.type === 'mc') {
+      const sel = selections[q.id];
+      isCorrect = (sel === q.correct);
+      q.opts.forEach((_, i) => {
+        const el = document.getElementById(`opt-${q.id}-${i}`);
+        el.classList.remove('selected');
+        el.classList.add('locked');
+        if (i === sel && isCorrect)   el.classList.add('result-correct');
+        else if (i === sel)           el.classList.add('result-wrong');
+        else if (i === q.correct)     el.classList.add('result-reveal');
+      });
+      if (!isCorrect) {
+        fbh.innerHTML = `<strong>Correct answer:</strong> (${['A','B','C','D'][q.correct]}) ${q.opts[q.correct]}<br><br>`;
+      }
+
+    } else if (q.type === 'tf') {
+      const sel = selections[q.id];
+      isCorrect = (sel === q.correct);
+      ['true','false'].forEach(v => {
+        const el = document.getElementById(`tf-${q.id}-${v}`);
+        const bval = (v === 'true');
+        el.classList.remove('selected');
+        el.classList.add('locked');
+        if (bval === sel && isCorrect) el.classList.add('result-correct');
+        else if (bval === sel)         el.classList.add('result-wrong');
+        else if (bval === q.correct)   el.classList.add('result-reveal');
+      });
+      if (!isCorrect) {
+        fbh.innerHTML = `<strong>Correct answer:</strong> ${q.correct ? 'True' : 'False'}<br><br>`;
+      }
+
+    } else { // sa
+      const txt = (selections[q.id] || '').toLowerCase();
+      const matched = q.correctKW.filter(kw => txt.includes(kw.toLowerCase())).length;
+      isCorrect = matched >= Math.ceil(q.correctKW.length * 0.4);
+      const inp = document.getElementById(`sa-${q.id}`);
+      inp.disabled = true;
+      inp.classList.add(isCorrect ? 'result-correct' : 'result-wrong');
+      fbh.innerHTML = `<strong>Sample answer:</strong> ${q.correctAnswer}<br><br>`;
+    }
+
+    isCorrect ? correct++ : wrong++;
+    card.classList.remove('answered');
+    card.classList.add(isCorrect ? 'show-correct' : 'show-wrong');
+    num.classList.remove('answered');
+    num.classList.add(isCorrect ? 'show-correct' : 'show-wrong');
+
+    fb.classList.add('show', isCorrect ? 'fb-ok' : 'fb-err');
+    fbs.className = 'fb-status ' + (isCorrect ? 'ok' : 'err');
+    fbs.textContent = isCorrect ? '✓ Correct!' : '✗ Incorrect';
+    fbh.innerHTML += `<strong>💡 Hint:</strong> ${q.hint}`;
+  });
+
+  showResult(correct, wrong);
+}
+
+function showResult(correct, wrong) {
+  const total = QUESTIONS.length;
+  const pct = Math.round((correct / total) * 100);
+  const grades = [
+    [90,'Excellent! 🏆 Outstanding mastery of T&D concepts.'],
+    [80,'Great job! 👍 Strong understanding with minor gaps.'],
+    [70,'Good work! 📚 Review the hints on incorrect questions.'],
+    [60,'Keep going! 💪 Revisit the slides and try again.'],
+    [0, 'Needs improvement. 📖 Re-read the materials carefully.']
+  ];
+  const grade = grades.find(g => pct >= g[0]);
+
+  document.getElementById('res-pct').textContent   = pct + '%';
+  document.getElementById('res-grade').textContent = grade[1];
+  document.getElementById('res-c').textContent     = correct;
+  document.getElementById('res-w').textContent     = wrong;
+  document.getElementById('result-overlay').classList.add('show');
+}
+
+function closeOverlay() {
+  document.getElementById('result-overlay').classList.remove('show');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function retryQuiz() {
+  document.getElementById('result-overlay').classList.remove('show');
+  buildQuiz();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+buildQuiz();
+</script>
+</body>
+</html>
